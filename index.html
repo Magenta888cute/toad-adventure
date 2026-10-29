@@ -51,6 +51,13 @@
   #start h2 { margin: 4px 0 12px; font-size: 18px; color: #d35400; }
   #start p { font-size: 15px; line-height: 1.4; }
   #start .btn { font-size: 24px; padding: 12px 34px; margin: 6px; }
+  #moveModal { z-index: 11; }
+  #moveModal .card { text-align: left; }
+  .moveBox h3 { margin: 14px 0 4px; color: #2e7d32; }
+  .moveBox p { margin: 4px 0 8px; line-height: 1.4; }
+  .moveHint { background: #fff; border: 3px solid #ffd27f; border-radius: 14px; padding: 10px 14px; }
+  .moveCode { display: block; width: 100%; box-sizing: border-box; min-height: 84px; margin: 8px 0; padding: 10px 12px; border: 3px solid #ff9f43; border-radius: 12px; font: 13px/1.3 ui-monospace, Menlo, monospace; color: #234; background: #fff; resize: vertical; word-break: break-all; }
+  .moveStatus { min-height: 20px; margin: 4px 0 8px; font-weight: bold; color: #d35400; }
   .modal { position: fixed; inset: 0; display: none; align-items: center; justify-content: center; background: rgba(0,0,0,.45); z-index: 9; pointer-events: auto; }
   .modal .card { background: #fffbe6; color: #234; border-radius: 24px; padding: 20px 24px; width: min(760px, 94vw); max-height: calc(100dvh - 20px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px)); overflow: auto; border: 6px solid #ff9f43; text-shadow: none; }
   .modal h2 { margin: 0 0 6px; color: #d35400; font-size: 28px; }
@@ -307,6 +314,7 @@
     Collect 🍄 mushrooms and 🌸 petals, make friends, hatch a baby toad, raise a 🌈 rainbow bird, and become the most <b>LEGENDARY TOAD</b> ever!</p>
     <button class="btn green" id="playBtn">▶ Play</button>
     <button class="btn red" id="resetBtn">🔄 New Game</button>
+    <button class="btn" id="moveBtn" style="font-size:16px;padding:8px 18px">📦 Move my save</button>
   </div>
 </div>
 
@@ -373,11 +381,41 @@
   </div>
 </div>
 
+<div id="moveModal" class="modal">
+  <div class="card">
+    <h2>📦 Move my save</h2>
+    <div class="moveBox">
+      <p>Your toad is saved inside this browser, for this web address only. A <b>save code</b> carries it to the game's new address, or to another iPad or phone.</p>
+      <div id="moveFlyBox" style="display:none">
+        <h3>✈️ Fly to the new home</h3>
+        <p>Toad Adventure moved to <b id="moveHomeName"></b>. One tap carries your toad there, and you keep playing at the new address.</p>
+        <button class="btn green" id="moveFly">✈️ Fly my save to the new home</button>
+        <div class="moveStatus" id="moveFlyStatus"></div>
+      </div>
+      <p id="moveHint" class="moveHint" style="display:none"></p>
+      <h3>📋 Copy my save code</h3>
+      <p>Tap Copy here. Then open the game where you want it, tap <b>Move my save</b> on its title screen, paste the code and tap Load.</p>
+      <button class="btn" id="moveCopy">📋 Copy save code</button>
+      <textarea class="moveCode" id="moveOut" readonly aria-label="Your save code" style="display:none"></textarea>
+      <div class="moveStatus" id="moveCopyStatus"></div>
+      <h3>📥 Load a save code</h3>
+      <textarea class="moveCode" id="moveIn" placeholder="Paste a save code here" aria-label="Paste a save code"></textarea>
+      <button class="btn blue" id="moveLoad">📥 Load this save</button>
+      <div class="moveStatus" id="moveLoadStatus"></div>
+    </div>
+    <p style="text-align:center"><button class="btn" id="closeMove">Close</button></p>
+  </div>
+</div>
+
 <div id="updates" class="modal">
   <div class="card">
     <h2>📋 Update Log</h2>
     <div>Everything new in Toad Adventure, newest first. Ideas by Sasha!</div>
-    <div class="upd"><h3>🆕 Update 16 · October 29, 2026</h3><ul>
+    <div class="upd"><h3>🆕 Update 17 · October 29, 2026</h3><ul>
+      <li>📦 <b>Move my save</b> (on the title screen): copy a <b>save code</b> here and paste it where the game opens next, and your whole toad comes along: XP, clothes, pets, birds, babies, coins, everything!</li>
+      <li>🏠 Toad Adventure has a new home at <b>magenta888cute.github.io/toad-adventure</b>. At the old address, one tap flies your toad over.</li>
+    </ul></div>
+    <div class="upd"><h3>Update 16 · October 29, 2026</h3><ul>
       <li>📱 <b>Toad Adventure now fits EVERY screen</b> — including folding phones like the iPhone Duo! The game looks right on the little front screen, the big unfolded screen, AND when you fold or unfold mid-hop.</li>
       <li>🛟 Buttons, the joystick, and panels now politely step away from the notch, the home bar, and screen edges — nothing hides where you can't tap it.</li>
       <li>↔️ A proper sideways-phone layout too: joystick bottom-left, buttons bottom-right, everything small and tidy.</li>
@@ -803,6 +841,188 @@
 
 <script src="three.min.js"></script>
 <script>
+/* Move my save. The toad is saved inside the browser, for this web address only. This packs the
+   save into one SAVE CODE that can be copied here and pasted where the game opens next (its new
+   address, another iPad or phone), and reads such a code back in. Opened at an old address, it also
+   offers one tap that flies a small-enough save over with a #move=<code> link.
+   Runs before the game so a #move= link is handled before the game reads its save. */
+const Transfer = {
+  game: 'toad-adventure',
+  tag: 'TOAD',
+  keys: ['toad-adventure-save-v1'],
+  mainKey: 'toad-adventure-save-v1',
+  // old address -> where the game lives now (the fly button only shows at these addresses)
+  homes: {
+    'chen168.github.io': 'https://magenta888cute.github.io/toad-adventure/',
+    'old.localhost': location.protocol + '//new.localhost:' + location.port + location.pathname, // for testing
+  },
+  LINK_MAX: 40000, // the longest save code that still fits in a link on every browser
+  MOVED_FLAG: 'toad-adventure.moved',
+  packed: null, packErr: null, packing: null,
+  $(id) { return document.getElementById(id); },
+
+  looksRight(main) { return !!main && typeof main === 'object' && typeof main.xp === 'number'; },
+  hasProgress(main) { return !!main && (main.xp > 0 || main.stage > 0 || (main.owned && main.owned.length > 0)); },
+  currentMain() { try { return JSON.parse(localStorage.getItem(this.mainKey)); } catch (e) { return null; } },
+  standalone() { return navigator.standalone === true || !!(window.matchMedia && matchMedia('(display-mode: standalone)').matches); },
+
+  /* ---------- bytes <-> text ---------- */
+  toB64(bytes) { let s = ''; for (let i = 0; i < bytes.length; i += 0x8000) s += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000)); return btoa(s).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, ''); },
+  fromB64(s) { s = s.replace(/-/g, '+').replace(/_/g, '/'); while (s.length % 4) s += '='; const bin = atob(s); const out = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i); return out; },
+  async squeeze(bytes, dir) { // gzip ('in') or un-gzip ('out') with the browser's built-in streams
+    const cs = new (dir === 'in' ? CompressionStream : DecompressionStream)('gzip');
+    const w = cs.writable.getWriter(); w.write(bytes); w.close();
+    return new Uint8Array(await new Response(cs.readable).arrayBuffer());
+  },
+
+  /* ---------- pack this browser's save into a code ---------- */
+  async pack() {
+    const data = {};
+    for (const k of this.keys) { let v = null; try { v = localStorage.getItem(k); } catch (e) { /* ignore */ } if (v !== null) data[k] = v; }
+    if (!data[this.mainKey]) throw new Error('There is no saved toad here yet.');
+    const bytes = new TextEncoder().encode(JSON.stringify({ game: this.game, v: 1, when: Date.now(), data }));
+    let body = bytes, kind = 'p';
+    if (typeof CompressionStream !== 'undefined') { try { body = await this.squeeze(bytes, 'in'); kind = 'g'; } catch (e) { body = bytes; kind = 'p'; } }
+    return this.tag + '1' + kind + '.' + this.toB64(body);
+  },
+  prepack() { // start packing when the window opens, so a tap on Copy can reach the clipboard right away
+    this.packed = null; this.packErr = null;
+    this.packing = this.pack().then((c) => { this.packed = c; }, (e) => { this.packErr = e; });
+    return this.packing;
+  },
+
+  /* ---------- read a code (throws a friendly message when it is not one of ours) ---------- */
+  async unpack(code) {
+    code = String(code || '').replace(/\s+/g, '');
+    const m = /^([A-Z]+)1([gp])\.([A-Za-z0-9_-]+)$/.exec(code);
+    if (!m) throw new Error('That does not look like a save code. Copy the whole code and try again.');
+    if (m[1] !== this.tag) throw new Error('That save code is for a different game.');
+    let bytes = this.fromB64(m[3]);
+    if (m[2] === 'g') {
+      if (typeof DecompressionStream === 'undefined') throw new Error('This browser is too old to read the code. Please update it.');
+      bytes = await this.squeeze(bytes, 'out');
+    }
+    let obj = null;
+    try { obj = JSON.parse(new TextDecoder().decode(bytes)); } catch (e) { obj = null; }
+    if (!obj || obj.game !== this.game || !obj.data || typeof obj.data !== 'object') throw new Error('That save code is for a different game.');
+    let main = null;
+    try { main = JSON.parse(obj.data[this.mainKey]); } catch (e) { main = null; }
+    if (!this.looksRight(main)) throw new Error('The toad inside this code is broken.');
+    obj.main = main;
+    return obj;
+  },
+
+  /* ---------- put a code's save into this browser (the page reloads right after) ---------- */
+  apply(obj) {
+    window.SAVE_LOCK = true; // the game must not write its old save over the new one
+    for (const k of this.keys) {
+      try { if (typeof obj.data[k] === 'string') localStorage.setItem(k, obj.data[k]); else localStorage.removeItem(k); } catch (e) { console.warn('could not store ' + k, e); }
+    }
+    try { sessionStorage.setItem(this.MOVED_FLAG, '1'); } catch (e) { /* ignore */ }
+  },
+  reload() { history.replaceState(null, '', location.pathname + location.search); location.reload(); },
+
+  /* ---------- an incoming #move= link, handled before the game starts ---------- */
+  handleLink() {
+    const m = /[#&]move=([A-Za-z0-9_.-]+)/.exec(location.hash || '');
+    if (!m) return false;
+    window.SAVE_LOCK = true;
+    const ov = this.overlay('✈️ Your toad is landing here…');
+    this.unpack(m[1]).then((obj) => {
+      if (this.hasProgress(this.currentMain()) && !confirm('There is already a toad saved here. Replace it with the one that just arrived?')) throw new Error('kept');
+      this.apply(obj);
+      this.reload();
+    }).catch((e) => {
+      window.SAVE_LOCK = false;
+      ov.remove();
+      history.replaceState(null, '', location.pathname + location.search);
+      if (e.message !== 'kept') alert('Could not move the save: ' + e.message);
+    });
+    return true;
+  },
+  welcome() {
+    try { if (!sessionStorage.getItem(this.MOVED_FLAG)) return; sessionStorage.removeItem(this.MOVED_FLAG); } catch (e) { return; }
+    setTimeout(() => this.note('🎉 Your toad is here! Welcome back.'), 1200);
+  },
+
+  /* ---------- little bits of screen that work before the game's own UI exists ---------- */
+  overlay(text) {
+    const d = document.createElement('div');
+    d.style.cssText = 'position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;background:#c8f7c5;color:#1b5e20;font:900 clamp(22px,4vw,34px)/1.3 system-ui,sans-serif;text-align:center;padding:24px;';
+    d.textContent = text;
+    document.body.appendChild(d);
+    return d;
+  },
+  note(text) {
+    const d = document.createElement('div');
+    d.style.cssText = 'position:fixed;left:50%;top:calc(env(safe-area-inset-top,0px) + 14px);transform:translateX(-50%);z-index:9998;background:#fff;color:#1b5e20;border:3px solid #7cff5a;border-radius:999px;padding:10px 20px;font:900 18px system-ui,sans-serif;box-shadow:0 6px 18px rgba(0,0,0,.18);transition:opacity .5s;max-width:92vw;text-align:center;';
+    d.textContent = text;
+    document.body.appendChild(d);
+    setTimeout(() => { d.style.opacity = '0'; setTimeout(() => d.remove(), 600); }, 4500);
+  },
+
+  /* ---------- the Move my save window (opened from the title screen) ---------- */
+  copyTo(out, st, code) { // clipboard first (must be called straight from the tap), then the old-school way
+    out.value = code; out.style.display = '';
+    const fallback = () => {
+      let ok = false;
+      try { out.focus(); out.select(); out.setSelectionRange(0, code.length); ok = document.execCommand('copy'); } catch (e) { ok = false; }
+      st.innerHTML = ok ? '✅ Copied! Now paste it where the game opens next.' : 'Select the code above, copy it, and paste it where the game opens next.';
+    };
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(code).then(() => { st.innerHTML = '✅ Copied! Now paste it where the game opens next.'; }, fallback);
+    else fallback();
+  },
+  open() {
+    this.prepack();
+    const home = this.homes[location.hostname];
+    const shortHome = home ? home.replace(/^https?:\/\//, '').replace(/\/$/, '') : '';
+    this.$('moveFlyBox').style.display = home && !this.standalone() ? '' : 'none';
+    this.$('moveHomeName').textContent = shortHome;
+    const hint = this.$('moveHint');
+    hint.style.display = home && this.standalone() ? '' : 'none';
+    if (home) hint.innerHTML = 'Toad Adventure moved to <b>' + shortHome + '</b>. Add the new address to your home screen, open it there, tap Move my save and paste your code.';
+    for (const id of ['moveFlyStatus', 'moveCopyStatus', 'moveLoadStatus']) this.$(id).textContent = '';
+    this.$('moveOut').value = ''; this.$('moveOut').style.display = 'none'; this.$('moveIn').value = '';
+    this.$('moveModal').style.display = 'flex';
+  },
+  close() { this.$('moveModal').style.display = 'none'; },
+  wire() {
+    this.$('moveBtn').onclick = () => this.open();
+    this.$('closeMove').onclick = () => this.close();
+    this.$('moveFly').onclick = async () => {
+      const st = this.$('moveFlyStatus'), home = this.homes[location.hostname];
+      st.textContent = 'Packing up your toad…';
+      await this.packing;
+      if (this.packErr) { st.textContent = '😕 ' + this.packErr.message; return; }
+      if (this.packed.length > this.LINK_MAX) { st.innerHTML = 'Your save is too big to fly in one tap. Use the save code below instead.'; return; }
+      st.textContent = '✈️ Off we go!';
+      location.href = home + '#move=' + this.packed;
+    };
+    this.$('moveCopy').onclick = async () => {
+      const out = this.$('moveOut'), st = this.$('moveCopyStatus');
+      if (this.packed) { this.copyTo(out, st, this.packed); return; }
+      st.textContent = 'Packing up your toad…';
+      await this.packing;
+      if (this.packErr) { st.textContent = '😕 ' + this.packErr.message; return; }
+      this.copyTo(out, st, this.packed);
+    };
+    this.$('moveLoad').onclick = async () => {
+      const st = this.$('moveLoadStatus');
+      st.textContent = 'Reading the code…';
+      try {
+        const obj = await this.unpack(this.$('moveIn').value);
+        if (this.hasProgress(this.currentMain()) && !confirm('Replace the toad saved here with the one from the code? The toad here will be gone.')) { st.textContent = ''; return; }
+        st.textContent = '🐸 Here it comes!';
+        this.apply(obj);
+        this.reload();
+      } catch (e) { st.textContent = '😕 ' + e.message; }
+    };
+  },
+};
+Transfer.wire();
+Transfer.handleLink() || Transfer.welcome();
+</script>
+<script>
 (function () {
 'use strict';
 
@@ -1068,10 +1288,11 @@ function loadSave() {
   if (!save.labXp) save.labXp = {}; if (typeof save.vip !== 'boolean') save.vip = false; if (typeof save.vipLevel !== 'number') save.vipLevel = 0; if (typeof save.vipTag !== 'boolean') save.vipTag = false; if (!save.labSkins) save.labSkins = []; if (!save.labSkinEq) save.labSkinEq = {}; if (typeof save.research !== 'number') save.research = 0;
   if (!save.hammers) save.hammers = []; if (save.activeHammer === undefined) save.activeHammer = null; if (!save.babySkins) save.babySkins = []; if (!save.npcKids) save.npcKids = []; if (typeof save.legendGames !== 'number') save.legendGames = 0; if (!save.profile) save.profile = { name: null, pic: '🐸', frame: 'wood' };
 }
-const GAME_VERSION = 16;
+const GAME_VERSION = 17;
 function curBird() { return save.activeBird ? save.birds[save.activeBird] : null; }
 function curBirdSpec() { return BIRDS.find(b => b.id === save.activeBird) || BIRDS[0]; }
 function writeSave() {
+  if (window.SAVE_LOCK) return; // a moved-in save is being put in place (Move my save)
   save.pos = mode !== 'world' ? worldReturn.pos : player.inSpace ? { x: CIRCLE_POS.x + 8, y: 0, z: CIRCLE_POS.z + 8 } : player.inCave ? { x: CAVE.entrance.x, y: -3, z: CAVE.entrance.z } : player.inHouse ? { x: player.houseExit.x, y: 0, z: player.houseExit.z } : { x: player.pos.x, y: player.pos.y, z: player.pos.z };
   if (npcs.length) { save.npcXp = npcs.map(n => Math.floor(n.xp)); npcs.forEach(n => { if (n.extRef) n.extRef.xp = Math.floor(n.xp); }); }   // remember every toad's progress in the Legendary Race
   try { localStorage.setItem(SAVE_KEY, JSON.stringify(save)); } catch (e) {}
@@ -1735,7 +1956,7 @@ function renderBoard() {
   const rows = npcs.map(n => ({ name: n.name, xp: n.xp })).concat([{ name: profileName(), xp: save.xp, me: true }]).sort((a, b) => b.xp - a.xp);
   $('boardTable').innerHTML = rows.map((r, i) => '<tr class="' + (r.me ? 'me' : '') + '"><td>#' + (i + 1) + '</td><td>' + r.name + '</td><td>' + STAGES[stageFor(r.xp)].emoji + ' ' + STAGES[stageFor(r.xp)].name + '</td><td>' + Math.floor(r.xp) + ' XP</td></tr>').join('');
 }
-function anyModalOpen() { return ['shop', 'build', 'board', 'namer', 'birds', 'gamesModal', 'results', 'trophies', 'updates', 'music', 'photoModal', 'pets', 'arenaModal', 'taxi', 'wallpaper', 'cafe', 'chatTopics', 'friendReq', 'iceShop', 'shoeShop', 'farmShop', 'flowerStand', 'seedPick', 'sprites', 'tagMapModal', 'trade', 'classModal', 'taskModal', 'babyModal', 'bonkModal', 'howto', 'babies', 'locker', 'hammerShop', 'profileModal', 'babySkins'].some(id => $(id).style.display === 'flex'); }
+function anyModalOpen() { return ['shop', 'build', 'board', 'namer', 'birds', 'gamesModal', 'results', 'trophies', 'updates', 'music', 'photoModal', 'pets', 'arenaModal', 'taxi', 'wallpaper', 'cafe', 'chatTopics', 'friendReq', 'iceShop', 'shoeShop', 'farmShop', 'flowerStand', 'seedPick', 'sprites', 'tagMapModal', 'trade', 'classModal', 'taskModal', 'babyModal', 'bonkModal', 'howto', 'babies', 'locker', 'hammerShop', 'profileModal', 'babySkins', 'moveModal'].some(id => $(id).style.display === 'flex'); }
 function toggleModal(id, open) {
   const el = $(id); const show = open === undefined ? el.style.display !== 'flex' : open;
   if (show) ['shop', 'build', 'board'].forEach(o => { if (o !== id) $(o).style.display = 'none'; });
@@ -1838,7 +2059,7 @@ window.addEventListener('keydown', ev => {
   if (ev.target.tagName === 'INPUT') { if (code === 'Enter' || ev.key === 'Enter') $('namerOk').onclick(); return; }
   keys[code] = true;
   if (['Space', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(code)) ev.preventDefault();
-  if (code === 'Escape') { ['shop', 'build', 'board', 'birds', 'gamesModal', 'trophies', 'updates', 'music', 'pets', 'arenaModal', 'taxi', 'wallpaper', 'cafe', 'chatTopics', 'iceShop', 'shoeShop', 'farmShop', 'flowerStand', 'seedPick', 'sprites', 'tagMapModal', 'trade', 'classModal', 'babyModal', 'bonkModal', 'howto', 'babies', 'locker', 'hammerShop', 'profileModal', 'babySkins'].forEach(id => toggleModal(id, false)); return; }
+  if (code === 'Escape') { ['shop', 'build', 'board', 'birds', 'gamesModal', 'trophies', 'updates', 'music', 'pets', 'arenaModal', 'taxi', 'wallpaper', 'cafe', 'chatTopics', 'iceShop', 'shoeShop', 'farmShop', 'flowerStand', 'seedPick', 'sprites', 'tagMapModal', 'trade', 'classModal', 'babyModal', 'bonkModal', 'howto', 'babies', 'locker', 'hammerShop', 'profileModal', 'babySkins', 'moveModal'].forEach(id => toggleModal(id, false)); return; }
   if (mode === 'race' && race.me.frozenT > 0) { mash(); return; }
   if (/^Digit[1-8]$/.test(code) && save.instruments.length && mode === 'world') { playNote(+code[5] - 1); return; }
   if (anyModalOpen()) return;
@@ -2044,7 +2265,7 @@ function setFollowersVisible(vis) { for (const b of babies) b.group.visible = vi
 function enterGame(kind) {
   if (mode === 'world' || !worldReturn) worldReturn = { pos: player.pos.clone(), inWater: player.inWater };
   player.flying = false; player.inWater = false; player.vy = 0; player.kx = player.kz = 0; player.slowMul = 0; player.frozen = false; player.stunned = true;
-  mode = kind; ['shop', 'build', 'board', 'birds', 'gamesModal', 'cafe', 'chatTopics', 'iceShop', 'shoeShop', 'farmShop', 'flowerStand', 'seedPick', 'sprites', 'tagMapModal', 'trade', 'classModal', 'babyModal', 'bonkModal', 'howto', 'babies', 'locker', 'hammerShop', 'profileModal', 'babySkins'].forEach(id => toggleModal(id, false));
+  mode = kind; ['shop', 'build', 'board', 'birds', 'gamesModal', 'cafe', 'chatTopics', 'iceShop', 'shoeShop', 'farmShop', 'flowerStand', 'seedPick', 'sprites', 'tagMapModal', 'trade', 'classModal', 'babyModal', 'bonkModal', 'howto', 'babies', 'locker', 'hammerShop', 'profileModal', 'babySkins', 'moveModal'].forEach(id => toggleModal(id, false));
   document.body.classList.add('ingame'); $('games').style.display = 'none'; $('gamehud').style.display = 'block'; $('buttons').style.display = 'none'; $('babyBtn').style.display = 'none';
   setFollowersVisible(false); spiritShield = !!friend && save.activeSprite === 'ember'; if (spiritShield) showMsg('✨ ' + friend.name + ' will protect you from one hit!', 2000);
 }

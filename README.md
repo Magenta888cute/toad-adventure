@@ -2,7 +2,7 @@
 
 A 3D browser game designed by **Sasha** (age 8) and built with Three.js.
 
-**Play it:** open `index.html` in any browser, or visit the GitHub Pages link for this repo.
+**Play it here: https://magenta888cute.github.io/toad-adventure/** (or open `index.html` in any browser).
 
 ## The story
 You start as a teeny tadpole in a pond. Eat snacks under the water, collect pebbles, and build a little fort.
@@ -90,4 +90,4 @@ Add it to your phone or tablet home screen and it opens like a real app with its
 | Shop / Race board / Help | P / L / H |
 | Look around / zoom | Drag the mouse / scroll |
 
-Your progress saves automatically in the browser. Use **New Game** on the title screen to start over.
+Your progress saves automatically in the browser. Use **New Game** on the title screen to start over, or **Move my save** to carry your toad to a new web address or another device with a save code.
