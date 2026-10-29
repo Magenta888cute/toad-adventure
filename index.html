@@ -2,7 +2,8 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <title>Toad Adventure</title>
 <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
 <link rel="apple-touch-icon" href="icon-192.png">
@@ -14,7 +15,7 @@
   * { box-sizing: border-box; }
   html, body { margin: 0; height: 100%; overflow: hidden; background: #7ec8ff; font-family: "Chalkboard SE", "Comic Sans MS", "Comic Sans", cursive, sans-serif; touch-action: none; }
   canvas#game { display: block; width: 100%; height: 100%; }
-  #hud { position: fixed; inset: 0; pointer-events: none; color: #fff; text-shadow: 0 2px 0 rgba(0,0,0,.45); }
+  #hud { position: fixed; inset: env(safe-area-inset-top, 0px) env(safe-area-inset-right, 0px) env(safe-area-inset-bottom, 0px) env(safe-area-inset-left, 0px); pointer-events: none; color: #fff; text-shadow: 0 2px 0 rgba(0,0,0,.45); }
   .panel { background: rgba(20, 60, 30, .78); border: 3px solid #b9ff8a; border-radius: 18px; padding: 10px 14px; }
   #topleft { position: absolute; left: 12px; top: 12px; min-width: 250px; max-width: 360px; }
   #stage { font-size: 22px; font-weight: bold; color: #ffe66d; }
@@ -51,7 +52,7 @@
   #start p { font-size: 15px; line-height: 1.4; }
   #start .btn { font-size: 24px; padding: 12px 34px; margin: 6px; }
   .modal { position: fixed; inset: 0; display: none; align-items: center; justify-content: center; background: rgba(0,0,0,.45); z-index: 9; pointer-events: auto; }
-  .modal .card { background: #fffbe6; color: #234; border-radius: 24px; padding: 20px 24px; width: min(760px, 94vw); max-height: 90vh; overflow: auto; border: 6px solid #ff9f43; text-shadow: none; }
+  .modal .card { background: #fffbe6; color: #234; border-radius: 24px; padding: 20px 24px; width: min(760px, 94vw); max-height: calc(100dvh - 20px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px)); overflow: auto; border: 6px solid #ff9f43; text-shadow: none; }
   .modal h2 { margin: 0 0 6px; color: #d35400; font-size: 28px; }
   .items { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; margin-top: 12px; }
   .item { background: #fff; border: 3px solid #ffd27f; border-radius: 16px; padding: 10px; text-align: center; }
@@ -67,7 +68,7 @@
   .choice { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; margin: 10px 0; }
   .choice .btn { font-size: 16px; }
   .choice .btn.sel { outline: 4px solid #2e7d32; }
-  #touch { position: fixed; inset: 0; pointer-events: none; display: none; }
+  #touch { position: fixed; inset: env(safe-area-inset-top, 0px) env(safe-area-inset-right, 0px) env(safe-area-inset-bottom, 0px) env(safe-area-inset-left, 0px); pointer-events: none; display: none; }
   #stick { position: absolute; left: 30px; bottom: 200px; width: 130px; height: 130px; border-radius: 50%; background: rgba(255,255,255,.25); border: 3px solid rgba(255,255,255,.6); pointer-events: auto; }
   #knob { position: absolute; left: 40px; top: 40px; width: 50px; height: 50px; border-radius: 50%; background: rgba(255,255,255,.8); }
   #tbtns { position: absolute; right: 20px; bottom: 200px; display: grid; grid-template-columns: 1fr 1fr; gap: 12px; pointer-events: auto; }
@@ -119,7 +120,7 @@
   #tut { position: absolute; left: 50%; top: 86px; transform: translateX(-50%); max-width: 640px; font-size: 15px; pointer-events: auto; border-color: #ffe66d; text-align: center; z-index: 5; }
   #tut b { color: #ffe66d; }
   body.touch #tut { top: auto; bottom: 150px; max-width: 68%; font-size: 13px; }
-  #abilityUI { position: fixed; right: 14px; bottom: 14px; display: none; align-items: flex-end; gap: 10px; z-index: 6; pointer-events: auto; }
+  #abilityUI { position: fixed; right: calc(14px + env(safe-area-inset-right, 0px)); bottom: calc(14px + env(safe-area-inset-bottom, 0px)); display: none; align-items: flex-end; gap: 10px; z-index: 6; pointer-events: auto; }
   #abilityUI .ab { width: 68px; height: 68px; border-radius: 50%; border: 3px solid #fff; font: inherit; font-weight: bold; font-size: 12px; line-height: 1.15; color: #3b1d00; background: rgba(255,159,67,.92); box-shadow: 0 4px 0 rgba(0,0,0,.3); cursor: pointer; touch-action: none; user-select: none; -webkit-user-select: none; }
   #abilityUI .ab:active { transform: translateY(2px); }
   #abilityUI .ab.run { background: rgba(124,255,90,.92); }
@@ -132,6 +133,13 @@
   @keyframes diamondGlow { 0%,100% { box-shadow: 0 0 10px #7fe7ff; } 50% { box-shadow: 0 0 28px #b9f3ff; } }
   .spk { position: absolute; font-size: 22px; animation: spkTw 1.4s infinite; z-index: 3; }
   @keyframes spkTw { 0%,100% { opacity: .3; transform: scale(.7) rotate(-10deg); } 50% { opacity: 1; transform: scale(1.15) rotate(10deg); } }
+  /* unfolded square screens and small tablets */
+  @media (min-width: 701px) and (max-width: 1000px) {
+    #topleft { max-width: 300px; } #stage { font-size: 18px; } #quest { font-size: 12px; }
+    #topright { max-width: 55%; font-size: 13px; line-height: 1.4; }
+    body.touch #buttons { top: 150px; left: 150px; }
+    body.touch #buttons .btn { font-size: 13px; padding: 5px 9px; }
+  }
   @media (max-width: 700px) {
     #help, #maplabel { display: none; }
     #topleft { min-width: 0; width: 52%; padding: 6px 10px; } #quest { font-size: 12px; } #stage { font-size: 17px; }
@@ -151,6 +159,61 @@
     body.touch.ingame #tbtns { bottom: 160px; }
     #abilityUI .ab { width: 58px; height: 58px; font-size: 11px; }
     #abilityUI .ab.run { width: 74px; height: 74px; font-size: 12px; }
+  }
+  /* folded phone screens (iPhone Duo front screen and other small phones) */
+  @media (max-width: 520px) {
+    .panel { border-width: 2px; border-radius: 12px; }
+    #topleft { width: 46%; padding: 5px 8px; } #stage { font-size: 14px; } #quest { font-size: 10px; line-height: 1.25; } #xpbar { height: 10px; margin: 3px 0; }
+    #topright { max-width: 47%; font-size: 10px; padding: 5px 8px; line-height: 1.35; } #seasonTag { font-size: 10px; }
+    .btn { font-size: 11px; padding: 5px 8px; border-width: 2px; border-radius: 10px; }
+    body.touch #buttons { top: auto; bottom: 4px; left: 6px; right: 6px; height: 46px; align-items: center; align-content: center; flex-wrap: nowrap; overflow-x: auto; justify-content: flex-start; padding-bottom: 2px; touch-action: pan-x; }
+    body.touch #buttons .btn { font-size: 11px; padding: 5px 8px; flex: 0 0 auto; }
+    #games { padding: 5px 6px; max-width: 110px; } #games .title { font-size: 10px; } #games .btn { font-size: 11px; }
+    body.touch #games { top: 215px; }
+    #minimap { width: 84px; height: 84px; }
+    body.touch #minimap { top: 118px; }
+    #gamehud { font-size: 12px; max-width: 74%; top: 86px; padding: 6px 8px; } #gamehud .btn { font-size: 11px; }
+    .sbar { width: 150px; height: 10px; }
+    #msg { font-size: 15px; top: 22%; } body.ingame #msg { font-size: 13px; }
+    #prompt { font-size: 12px; padding: 5px 10px; } body.touch #prompt { bottom: 300px; }
+    #stick { width: 104px; height: 104px; bottom: 120px; left: 12px; } #knob { width: 42px; height: 42px; }
+    #tbtns { gap: 6px; bottom: 64px; right: 10px; } .tb { width: 50px; height: 50px; font-size: 10px; }
+    body.touch #stick { bottom: 150px; } body.touch #tbtns { bottom: 92px; }
+    body.touch.ingame #tbtns { bottom: 150px; }
+    #abilityUI { gap: 6px; } #abilityBtns { gap: 6px; }
+    #abilityUI .ab { width: 50px; height: 50px; font-size: 10px; } #abilityUI .ab.run { width: 64px; height: 64px; font-size: 11px; }
+    #tut { bottom: 235px; font-size: 11px; max-width: 94%; padding: 5px 8px; }
+    .modal .card { padding: 12px 12px; border-width: 4px; border-radius: 16px; width: 96vw; }
+    .modal h2 { font-size: 20px; }
+    .items { grid-template-columns: repeat(auto-fill, minmax(118px, 1fr)); gap: 6px; }
+    #start .card { padding: 16px 14px; max-width: 94vw; } #start h1 { font-size: 30px; } #start p { font-size: 13px; } #start .btn { font-size: 18px; padding: 10px 22px; }
+    .bubble { font-size: 11px; max-width: 150px; padding: 4px 7px; }
+    .bird-row { padding: 6px 8px; gap: 7px; } .bird-row .em { font-size: 26px; } .bird-row .nm { font-size: 14px; }
+    .gcard .nm { font-size: 17px; } .gcard p { font-size: 12px; }
+  }
+  /* a folded phone held sideways (short and wide) */
+  @media (max-height: 500px) {
+    #help, #maplabel { display: none; }
+    #topleft { min-width: 0; max-width: 300px; padding: 4px 8px; } #stage { font-size: 14px; } #quest { font-size: 10px; line-height: 1.25; } #xpbar { height: 8px; margin: 3px 0; }
+    #topright { font-size: 11px; padding: 4px 8px; line-height: 1.3; max-width: 44%; }
+    #buttons { top: auto; bottom: 64px; right: 110px; left: 228px; height: 42px; flex-direction: row; flex-wrap: nowrap; overflow-x: auto; align-items: center; align-content: center; justify-content: flex-start; gap: 4px; max-height: none; touch-action: pan-x; }
+    #buttons .btn { flex: 0 0 auto; }
+    body.touch #buttons { top: auto; bottom: 64px; left: 228px; right: 110px; height: 42px; flex-wrap: nowrap; overflow-x: auto; align-items: center; justify-content: flex-start; }
+    .btn { font-size: 11px; padding: 4px 8px; }
+    #games { top: auto; bottom: 8px; left: 118px; transform: none; padding: 4px 6px; } #games .title { display: none; } #games .btn { font-size: 11px; }
+    body.touch #games { top: auto; bottom: 8px; left: 118px; }
+    #minimap { width: 76px; height: 76px; left: auto; right: 10px; bottom: auto; top: 108px; }
+    body.touch #minimap { top: 108px; left: auto; right: 10px; bottom: auto; }
+    #gamehud { top: 4px; font-size: 12px; padding: 4px 8px; min-width: 0; max-width: 70%; } #gamehud .btn { font-size: 11px; padding: 3px 8px; }
+    .sbar { width: 140px; height: 9px; margin: 3px auto; }
+    #stick { bottom: 12px; left: 12px; width: 96px; height: 96px; } #knob { width: 40px; height: 40px; }
+    #tbtns { bottom: 12px; right: 92px; grid-template-columns: repeat(5, 1fr); gap: 5px; } .tb { width: 46px; height: 46px; font-size: 9px; }
+    body.touch #stick { bottom: 12px; } body.touch #tbtns { bottom: 12px; }
+    body.touch.ingame #tbtns { bottom: 12px; right: 200px; }
+    #abilityUI .ab { width: 48px; height: 48px; font-size: 9px; } #abilityUI .ab.run { width: 58px; height: 58px; font-size: 10px; }
+    #msg { font-size: 14px; top: 20%; } body.touch #msg { top: 20%; }
+    #prompt { bottom: 64px; font-size: 12px; white-space: normal; max-width: 70%; text-align: center; } body.touch #prompt { bottom: 68px; }
+    #tut { top: 4px; bottom: auto; font-size: 10px; max-width: 56%; }
   }
 </style>
 </head>
@@ -314,7 +377,12 @@
   <div class="card">
     <h2>📋 Update Log</h2>
     <div>Everything new in Toad Adventure, newest first. Ideas by Sasha!</div>
-    <div class="upd"><h3>🆕 Update 15 · October 3, 2026</h3><ul>
+    <div class="upd"><h3>🆕 Update 16 · October 29, 2026</h3><ul>
+      <li>📱 <b>Toad Adventure now fits EVERY screen</b> — including folding phones like the iPhone Duo! The game looks right on the little front screen, the big unfolded screen, AND when you fold or unfold mid-hop.</li>
+      <li>🛟 Buttons, the joystick, and panels now politely step away from the notch, the home bar, and screen edges — nothing hides where you can't tap it.</li>
+      <li>↔️ A proper sideways-phone layout too: joystick bottom-left, buttons bottom-right, everything small and tidy.</li>
+    </ul></div>
+    <div class="upd"><h3>Update 15 · October 3, 2026</h3><ul>
       <li>🧫 <b>Scientist Cards:</b> your own lab ID — Research, every class level, and your <b>chance of being THE LEGENDARY</b>. The chance GROWS every game you wait (10% up to 40%) and resets when it's finally your turn!</li>
       <li>👀 <b>Big-toad fix:</b> Mythic, Galaxy, and Universe toads can finally SEE in the lab — taller ceilings and a camera that never pokes through the roof. Every evolution is fully visible now.</li>
       <li>🧁 <b>NEW CLASS: THE BAKER (900 🪙)</b> — with TWO abilities! Press F to munch a cupcake for FULL HEALTH, and G to eat a whole cake for FULL STAMINA. Computer toads can be bakers too (they snack when hurt!).</li>
@@ -1000,7 +1068,7 @@ function loadSave() {
   if (!save.labXp) save.labXp = {}; if (typeof save.vip !== 'boolean') save.vip = false; if (typeof save.vipLevel !== 'number') save.vipLevel = 0; if (typeof save.vipTag !== 'boolean') save.vipTag = false; if (!save.labSkins) save.labSkins = []; if (!save.labSkinEq) save.labSkinEq = {}; if (typeof save.research !== 'number') save.research = 0;
   if (!save.hammers) save.hammers = []; if (save.activeHammer === undefined) save.activeHammer = null; if (!save.babySkins) save.babySkins = []; if (!save.npcKids) save.npcKids = []; if (typeof save.legendGames !== 'number') save.legendGames = 0; if (!save.profile) save.profile = { name: null, pic: '🐸', frame: 'wood' };
 }
-const GAME_VERSION = 15;
+const GAME_VERSION = 16;
 function curBird() { return save.activeBird ? save.birds[save.activeBird] : null; }
 function curBirdSpec() { return BIRDS.find(b => b.id === save.activeBird) || BIRDS[0]; }
 function writeSave() {
@@ -1798,11 +1866,11 @@ if ('ontouchstart' in window) {
   stick.addEventListener('touchstart', e => { const t = e.changedTouches[0]; sid = t.identifier; const r = stick.getBoundingClientRect(); cx = r.left + r.width / 2; cy = r.top + r.height / 2; e.preventDefault(); }, { passive: false });
   window.addEventListener('touchmove', e => {
     for (const t of e.changedTouches) {
-      if (t.identifier === sid) { let dx = t.clientX - cx, dy = t.clientY - cy; const d = Math.hypot(dx, dy), max = 50; if (d > max) { dx *= max / d; dy *= max / d; } knob.style.left = 40 + dx + 'px'; knob.style.top = 40 + dy + 'px'; touchInput.x = dx / max; touchInput.z = -dy / max; }
+      if (t.identifier === sid) { let dx = t.clientX - cx, dy = t.clientY - cy; const kb = (stick.clientWidth - knob.clientWidth) / 2, max = Math.max(34, stick.clientWidth * 0.38); const d = Math.hypot(dx, dy); if (d > max) { dx *= max / d; dy *= max / d; } knob.style.left = kb + dx + 'px'; knob.style.top = kb + dy + 'px'; touchInput.x = dx / max; touchInput.z = -dy / max; }
       else if (t.identifier === camTouch) { camYaw -= (t.clientX - lastX) * 0.008; lastX = t.clientX; camManual = 2.5; }
     }
   }, { passive: false });
-  const endTouch = e => { for (const t of e.changedTouches) { if (t.identifier === sid) { sid = null; touchInput.x = touchInput.z = 0; knob.style.left = knob.style.top = '40px'; } if (t.identifier === camTouch) camTouch = null; } };
+  const endTouch = e => { for (const t of e.changedTouches) { if (t.identifier === sid) { sid = null; touchInput.x = touchInput.z = 0; const kb = (stick.clientWidth - knob.clientWidth) / 2; knob.style.left = knob.style.top = kb + 'px'; } if (t.identifier === camTouch) camTouch = null; } };
   window.addEventListener('touchend', endTouch); window.addEventListener('touchcancel', endTouch);
   canvas.addEventListener('touchstart', e => { const t = e.changedTouches[0]; camTouch = t.identifier; lastX = t.clientX; if (mode === 'race' && race.me.frozenT > 0) mash(); }, { passive: true });
   document.querySelectorAll('.tb').forEach(b => {
